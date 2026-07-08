@@ -1,0 +1,107 @@
+<div class="experience" [ngClass]="themeClass">
+  <div class="weather-canvas" aria-hidden="true">
+    <span class="weather-canvas__grid"></span>
+    <span class="weather-canvas__beam weather-canvas__beam--one"></span>
+    <span class="weather-canvas__beam weather-canvas__beam--two"></span>
+    <span class="weather-canvas__scan"></span>
+  </div>
+
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true">
+          <span class="msr fill">partly_cloudy_day</span>
+        </span>
+        <div>
+          <h1 class="brand__title">{{ 'app.title' | translate }}</h1>
+          <p class="brand__sub">{{ 'app.subtitle' | translate }}</p>
+        </div>
+      </div>
+
+      <app-language-switcher
+        [languages]="languages"
+        [current]="currentLang"
+        (changed)="onLanguageChange($event)">
+      </app-language-switcher>
+    </header>
+
+    <main class="stage">
+      <section class="control-panel">
+        <div class="control-panel__head">
+          <span class="control-panel__label">
+            <span class="msr" aria-hidden="true">travel_explore</span>
+            {{ 'select.country' | translate }}
+          </span>
+          <span class="control-panel__count" *ngIf="countries.length">{{ countries.length }}</span>
+        </div>
+
+        <app-country-selector
+          [countries]="countries"
+          [selectedCode]="activeCountryCode"
+          (selected)="onCountrySelected($event)">
+        </app-country-selector>
+
+        <div class="spotlight" *ngIf="spotlight.length">
+          <button
+            type="button"
+            class="spotlight__item"
+            *ngFor="let item of spotlight; let i = index"
+            [ngClass]="'tone-' + categoryFor(item)"
+            [style.animationDelay]="(i * 70) + 'ms'"
+            (click)="onSpotlightSelected(item)">
+            <span class="spotlight__icon">
+              <app-weather-icon [conditionKey]="item.conditionKey" [isDay]="item.isDay" [size]="34" />
+            </span>
+            <span class="spotlight__body">
+              <span class="spotlight__place">
+                <span aria-hidden="true">{{ flagFor(item.countryCode) }}</span>
+                {{ item.countryName }}
+              </span>
+              <span class="spotlight__condition">{{ ('weather.' + item.conditionKey) | translate }}</span>
+            </span>
+            <span class="spotlight__temp">{{ item.temperature | number:'1.0-0' }}°</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="result-panel">
+        <div *ngIf="loading" class="status-panel status-panel--loading">
+          <span class="status-panel__icon" aria-hidden="true">
+            <span class="msr fill">cyclone</span>
+          </span>
+          <p>{{ 'state.loading' | translate }}</p>
+          <div class="loading-meter" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+
+        <div *ngIf="error && !loading" class="status-panel status-panel--error">
+          <span class="status-panel__icon" aria-hidden="true">
+            <span class="msr fill">error</span>
+          </span>
+          <p>{{ 'state.error' | translate }}</p>
+        </div>
+
+        <div *ngIf="!loading && !error && !weather" class="status-panel status-panel--empty">
+          <span class="status-panel__icon" aria-hidden="true">
+            <span class="msr fill">public</span>
+          </span>
+          <p>{{ 'state.empty' | translate }}</p>
+        </div>
+
+        <app-weather-card
+          *ngIf="weather && !loading && !error"
+          [weather]="weather">
+        </app-weather-card>
+      </section>
+    </main>
+
+    <footer class="sitefoot">
+      <span>Open-Meteo</span>
+      <span>Spring Boot</span>
+      <span>Angular</span>
+    </footer>
+  </div>
+</div>

@@ -1,0 +1,131 @@
+/* ============================================================
+   Atmos — Material 3 design tokens + global styles
+   ============================================================ */
+
+:root {
+  /* M3 color system (light, tonal) */
+  --md-sys-color-primary: #4355b9;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #dde1ff;
+  --md-sys-color-on-primary-container: #00105c;
+  --md-sys-color-secondary: #006875;
+  --md-sys-color-secondary-container: #9eeffe;
+  --md-sys-color-tertiary: #984061;
+  --md-sys-color-tertiary-container: #ffd9e2;
+  --md-sys-color-surface: #fbf8ff;
+  --md-sys-color-surface-dim: #e7e6f2;
+  --md-sys-color-surface-container-lowest: #ffffff;
+  --md-sys-color-surface-container-low: #f5f3fb;
+  --md-sys-color-surface-container: #efedf8;
+  --md-sys-color-surface-container-high: #e9e7f3;
+  --md-sys-color-on-surface: #1a1b23;
+  --md-sys-color-on-surface-variant: #565867;
+  --md-sys-color-outline: #878998;
+  --md-sys-color-outline-variant: #d9dae8;
+  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-error-container: #ffdad6;
+
+  /* M3 shape scale */
+  --md-shape-sm: 12px;
+  --md-shape-md: 16px;
+  --md-shape-lg: 24px;
+  --md-shape-xl: 32px;
+  --md-shape-full: 999px;
+
+  /* M3 elevation */
+  --md-elev-1: 0 1px 3px 1px rgba(28, 27, 31, .08), 0 1px 2px rgba(28, 27, 31, .12);
+  --md-elev-2: 0 4px 10px -2px rgba(28, 27, 31, .12), 0 2px 3px rgba(28, 27, 31, .08);
+  --md-elev-3: 0 18px 40px -16px rgba(34, 38, 76, .28), 0 4px 10px -4px rgba(34, 38, 76, .14);
+  --md-elev-glow: 0 24px 70px -28px rgba(67, 85, 185, .45);
+
+  /* M3 motion (expressive) */
+  --md-motion-spring: cubic-bezier(.34, 1.45, .42, 1);
+  --md-motion-emphasized: cubic-bezier(.2, 0, 0, 1);
+  --md-motion-standard: cubic-bezier(.4, 0, .2, 1);
+
+  /* Typography */
+  --font-ui: 'Inter', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  --font-display: 'Fraunces', 'Noto Sans Ethiopic', serif;
+
+  /* Condition tones (chip background / accent) */
+  --tone-sun: #d97706;        --tone-sun-bg: #fde9c8;
+  --tone-moon: #5b5bd6;       --tone-moon-bg: #e2e2fb;
+  --tone-partly: #0284c7;     --tone-partly-bg: #d7eefc;
+  --tone-cloud: #64748b;      --tone-cloud-bg: #e3e8ef;
+  --tone-rain: #2563eb;       --tone-rain-bg: #dbe7fe;
+  --tone-snow: #0891b2;       --tone-snow-bg: #d6f3f8;
+  --tone-storm: #7c3aed;      --tone-storm-bg: #e9defc;
+  --tone-fog: #6b7280;        --tone-fog-bg: #e7e9ec;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface-dim);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Material Symbols helper */
+.msr {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  display: inline-block;
+  line-height: 1;
+  letter-spacing: normal;
+  white-space: nowrap;
+  direction: ltr;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  user-select: none;
+}
+.msr.fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+/* Condition tone utility classes */
+.tone-sun    { --tone: var(--tone-sun);    --tone-bg: var(--tone-sun-bg); }
+.tone-moon   { --tone: var(--tone-moon);   --tone-bg: var(--tone-moon-bg); }
+.tone-partly { --tone: var(--tone-partly); --tone-bg: var(--tone-partly-bg); }
+.tone-cloud  { --tone: var(--tone-cloud);  --tone-bg: var(--tone-cloud-bg); }
+.tone-rain   { --tone: var(--tone-rain);   --tone-bg: var(--tone-rain-bg); }
+.tone-snow   { --tone: var(--tone-snow);   --tone-bg: var(--tone-snow-bg); }
+.tone-storm  { --tone: var(--tone-storm);  --tone-bg: var(--tone-storm-bg); }
+.tone-fog    { --tone: var(--tone-fog);    --tone-bg: var(--tone-fog-bg); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: var(--md-sys-color-outline-variant);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background-color: var(--md-sys-color-outline); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Shared entrance animations */
+@keyframes atmos-rise {
+  from { opacity: 0; transform: translateY(18px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes atmos-pop {
+  0%   { opacity: 0; transform: scale(.85); }
+  70%  { transform: scale(1.03); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes atmos-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
