@@ -14,7 +14,7 @@ Angular single-page app for the weather experience. It shows live weather, count
 
 - Node.js 20+
 - Yarn 4+
-- The backend API running at `http://localhost:8081/api`
+- The backend API running at `http://localhost:8081/api/v1/swagger-ui/index.html`
 
 ## Getting started
 
@@ -57,4 +57,8 @@ http://localhost:8081/api/v1/swagger-ui/index.html
 - `src/app/` — app shell, services, and UI components
 - `src/assets/i18n/` — translation files
 - `src/environments/` — environment config
+
+
+
+
 
