@@ -1,7 +1,9 @@
-[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8113: CountryProfileComponent is not used within the template of AppComponent[0m [1m[35m[plugin angular-compiler][0m
+[1m[33m
+Warning: This is a simple server for use in testing or debugging Angular applications
+locally. It hasn't been reviewed for security issues.
 
-    src/app/app.component.ts:24:4:
-[37m      24 │     [32mCountryProfileComponent[37m
-         ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~[0m
-
-[39m[22m
+Binding this server to an open connection can result in compromising your application or
+computer. Using a different host than the one passed to the "--host" flag might result in
+websocket connection issues. You might need to use "--disable-host-check" if that's the
+case.
+    [39m[22m

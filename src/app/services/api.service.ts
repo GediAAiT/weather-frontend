@@ -3,7 +3,19 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { Country, CountryHighlight, CountryProfile, ForecastResponse, Language, Weather } from './models';
+import {
+  Country,
+  CountryExperience,
+  CountryHighlight,
+  CountryHighlightKind,
+  CountryHighlightsResponse,
+  CountryProfile,
+  ForecastResponse,
+  Language,
+  LiveCountryHighlight,
+  Weather,
+  WeatherOverviewResponse
+} from './models';
 
 type ProfileSeed = Pick<CountryProfile, 'headline' | 'summary' | 'highlights'>;
 
@@ -14,6 +26,7 @@ export class ApiService {
   private readonly weatherValues = new Map<string, Weather>();
   private readonly profileRequests = new Map<string, Observable<CountryProfile>>();
   private readonly profileValues = new Map<string, CountryProfile>();
+  private readonly overviewRequests = new Map<string, Observable<CountryExperience>>();
 
   private readonly profileSeeds: Record<string, ProfileSeed> = {
     AE: {
@@ -226,6 +239,40 @@ export class ApiService {
     return request;
   }
 
+  getCountryOverview(country: Country, lang: string): Observable<CountryExperience> {
+    const key = this.cacheKey(country.code, lang);
+    const cachedRequest = this.overviewRequests.get(key);
+    if (cachedRequest) return cachedRequest;
+
+    const params = new HttpParams().set('code', country.code).set('lang', lang);
+    const fallbackProfile = this.getFallbackCountryProfile(country);
+    const request = this.http.get<WeatherOverviewResponse>(`${this.base}/weather/overview`, { params }).pipe(
+      map((overview) => {
+        if (!overview.weather) {
+          throw new Error(`Missing weather overview for ${country.code}`);
+        }
+        return {
+          weather: overview.weather,
+          profile: this.normalizeHighlightsProfile(country, overview.highlights)
+        };
+      }),
+      tap(({ weather, profile }) => {
+        this.weatherValues.set(key, weather);
+        this.profileValues.set(key, profile);
+      }),
+      catchError(() => {
+        this.overviewRequests.delete(key);
+        return this.getWeather(country.code, lang).pipe(
+          map((weather) => ({ weather, profile: fallbackProfile }))
+        );
+      }),
+      shareReplay({ bufferSize: 1, refCount: false })
+    );
+
+    this.overviewRequests.set(key, request);
+    return request;
+  }
+
   getWeatherByCity(q: string, lang: string): Observable<Weather> {
     const params = new HttpParams().set('q', q).set('lang', lang);
     return this.http.get<Weather>(`${this.base}/weather/city`, { params });
@@ -253,10 +300,13 @@ export class ApiService {
 
     const params = new HttpParams().set('lang', lang);
     const fallback = this.getFallbackCountryProfile(country);
-    const request = this.http.get<Partial<CountryProfile>>(`${this.base}/countries/${country.code}/profile`, { params }).pipe(
-      map((profile) => this.normalizeProfile(country, profile)),
-      catchError(() => of(fallback)),
+    const request = this.http.get<CountryHighlightsResponse>(`${this.base}/countries/${country.code}/highlights`, { params }).pipe(
+      map((profile) => this.normalizeHighlightsProfile(country, profile)),
       tap((profile) => this.profileValues.set(key, profile)),
+      catchError(() => {
+        this.profileRequests.delete(key);
+        return of(fallback);
+      }),
       shareReplay({ bufferSize: 1, refCount: false })
     );
     this.profileRequests.set(key, request);
@@ -287,20 +337,87 @@ export class ApiService {
     };
   }
 
-  private normalizeProfile(country: Country, profile: Partial<CountryProfile>): CountryProfile {
+  private normalizeHighlightsProfile(country: Country, profile: CountryHighlightsResponse | undefined): CountryProfile {
     const fallback = this.getFallbackCountryProfile(country);
-    const highlights = Array.isArray(profile.highlights) && profile.highlights.length
-      ? profile.highlights.filter((item): item is CountryHighlight => Boolean(item?.title && item.description && item.kind))
-      : fallback.highlights;
+    const liveHighlights = Array.isArray(profile?.highlights) && profile.highlights.length
+      ? profile.highlights
+          .map((item) => this.normalizeHighlight(item))
+          .filter((item): item is CountryHighlight => Boolean(item))
+      : [];
+
+    const countryName = profile?.countryName || country.name;
+    const hasLiveHighlights = liveHighlights.length > 0;
+    const highlights = hasLiveHighlights ? liveHighlights : fallback.highlights;
 
     return {
-      countryCode: profile.countryCode || country.code,
-      countryName: profile.countryName || country.name,
-      headline: profile.headline || fallback.headline,
-      summary: profile.summary || fallback.summary,
-      source: 'backend',
+      countryCode: profile?.countryCode || country.code,
+      countryName,
+      headline: hasLiveHighlights
+        ? `${countryName}'s most recognized places and features`
+        : fallback.headline,
+      summary: hasLiveHighlights
+        ? `${countryName} is shown with live highlights from the backend, including notable buildings, natural features, resources, landmarks, and unique places.`
+        : fallback.summary,
+      source: hasLiveHighlights ? 'backend' : 'fallback',
       highlights
     };
+  }
+
+  private normalizeHighlight(item: LiveCountryHighlight): CountryHighlight | null {
+    const title = item?.title?.trim();
+    if (!title) return null;
+
+    const category = item.category?.trim();
+    const kind = this.kindForCategory(category);
+    return {
+      title,
+      description: item.description?.trim() || `${title} is a recognized ${category || 'feature'} associated with this country.`,
+      kind,
+      category,
+      imageUrl: item.imageUrl,
+      sourceUrl: item.sourceUrl,
+      icon: this.iconForKind(kind, category)
+    };
+  }
+
+  private kindForCategory(category: string | undefined): CountryHighlightKind {
+    const value = (category ?? '').toLowerCase();
+    if (/(skyscraper|tower|building|structure|castle|palace|bridge|stadium)/.test(value)) {
+      return 'building';
+    }
+    if (/(mountain|waterfall|lake|river|park|island|forest|desert|reef|volcano|canyon|natural)/.test(value)) {
+      return 'nature';
+    }
+    if (/(resource|mine|mineral|oil|gas|coal|field|reservoir)/.test(value)) {
+      return 'resource';
+    }
+    if (/(museum|temple|church|cathedral|mosque|festival|culture|heritage|archaeological)/.test(value)) {
+      return 'culture';
+    }
+    return 'landmark';
+  }
+
+  private iconForKind(kind: CountryHighlightKind, category: string | undefined): string {
+    const value = (category ?? '').toLowerCase();
+    if (/skyscraper|tower/.test(value)) return 'cell_tower';
+    if (/building|palace|castle/.test(value)) return 'apartment';
+    if (/mountain|volcano|canyon/.test(value)) return 'terrain';
+    if (/waterfall/.test(value)) return 'waterfall_chart';
+    if (/lake|river|reef|island/.test(value)) return 'water';
+    if (/park|forest/.test(value)) return 'forest';
+    if (/resource|mine|mineral/.test(value)) return 'diamond';
+    if (/oil|gas|coal/.test(value)) return 'local_gas_station';
+    if (/temple/.test(value)) return 'temple_buddhist';
+    if (/church|cathedral|mosque/.test(value)) return 'church';
+    if (/museum/.test(value)) return 'museum';
+
+    switch (kind) {
+      case 'building': return 'apartment';
+      case 'nature': return 'landscape';
+      case 'resource': return 'diamond';
+      case 'culture': return 'museum';
+      default: return 'travel_explore';
+    }
   }
 
   private genericProfileSeed(country: Country): ProfileSeed {

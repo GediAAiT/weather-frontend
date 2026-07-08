@@ -29,8 +29,7 @@ import { CountryProfileComponent } from './components/country-profile/country-pr
 export class AppComponent implements OnInit, OnDestroy {
   private readonly spotlightCodes = ['KE', 'JP', 'IS', 'BR', 'AE', 'ZA'];
   private selectionToken = 0;
-  private weatherSubscription: Subscription | null = null;
-  private profileSubscription: Subscription | null = null;
+  private experienceSubscription: Subscription | null = null;
 
   countries: Country[] = [];
   languages: Language[] = [];
@@ -77,8 +76,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.weatherSubscription?.unsubscribe();
-    this.profileSubscription?.unsubscribe();
+    this.experienceSubscription?.unsubscribe();
   }
 
   onLanguageChange(lang: string): void {
@@ -132,41 +130,31 @@ export class AppComponent implements OnInit, OnDestroy {
     const token = ++this.selectionToken;
     const cachedWeather = immediateWeather ?? this.api.getCachedWeather(country.code, this.currentLang);
     const cachedProfile = this.api.getCachedCountryProfile(country.code, this.currentLang);
+    const hasImmediateWeather = Boolean(cachedWeather);
 
     this.selected = country;
     this.profile = cachedProfile ?? this.api.getFallbackCountryProfile(country);
     this.weather = cachedWeather;
-    this.loading = !cachedWeather;
+    this.loading = !hasImmediateWeather;
     this.error = false;
 
-    this.loadProfile(country, token);
-    this.loadWeather(country, token, Boolean(cachedWeather));
-  }
-
-  private loadWeather(country: Country, token: number, hasImmediateWeather: boolean): void {
-    this.weatherSubscription?.unsubscribe();
-    this.weatherSubscription = this.api.getWeather(country.code, this.currentLang).subscribe({
-      next: (w) => {
+    this.experienceSubscription?.unsubscribe();
+    this.experienceSubscription = this.api.getCountryOverview(country, this.currentLang).subscribe({
+      next: ({ weather, profile }) => {
         if (!this.isCurrentSelection(country, token)) return;
-        this.weather = w;
+        this.weather = weather;
+        this.profile = profile;
         this.loading = false;
+        this.error = false;
       },
       error: () => {
         if (!this.isCurrentSelection(country, token)) return;
-        this.error = true;
         this.loading = false;
         if (!hasImmediateWeather) {
+          this.error = true;
           this.weather = null;
         }
       }
-    });
-  }
-
-  private loadProfile(country: Country, token: number): void {
-    this.profileSubscription?.unsubscribe();
-    this.profileSubscription = this.api.getCountryProfile(country, this.currentLang).subscribe((profile) => {
-      if (!this.isCurrentSelection(country, token)) return;
-      this.profile = profile;
     });
   }
 

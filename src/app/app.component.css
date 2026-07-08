@@ -344,7 +344,12 @@
 .result-panel {
   min-height: 540px;
   display: grid;
-  align-items: stretch;
+  gap: 16px;
+  align-items: start;
+}
+
+.result-panel.has-profile .status-panel {
+  min-height: 260px;
 }
 
 .status-panel {

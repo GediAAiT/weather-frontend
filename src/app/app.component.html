@@ -64,7 +64,7 @@
         </div>
       </section>
 
-      <section class="result-panel">
+      <section class="result-panel" [class.has-profile]="profile && selected">
         <div *ngIf="loading" class="status-panel status-panel--loading">
           <span class="status-panel__icon" aria-hidden="true">
             <span class="msr fill">cyclone</span>
@@ -95,6 +95,11 @@
           *ngIf="weather && !loading && !error"
           [weather]="weather">
         </app-weather-card>
+
+        <app-country-profile
+          *ngIf="profile && selected"
+          [profile]="profile">
+        </app-country-profile>
       </section>
     </main>
 

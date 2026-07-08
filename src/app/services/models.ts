@@ -15,6 +15,8 @@ export interface CountryHighlight {
   kind: CountryHighlightKind;
   icon?: string;
   imageUrl?: string;
+  sourceUrl?: string;
+  category?: string;
 }
 
 export interface CountryProfile {
@@ -24,6 +26,29 @@ export interface CountryProfile {
   summary: string;
   source: 'backend' | 'fallback';
   highlights: CountryHighlight[];
+}
+
+export interface LiveCountryHighlight {
+  title?: string;
+  category?: string;
+  description?: string;
+  imageUrl?: string;
+  sourceUrl?: string;
+  wikidataId?: string;
+}
+
+export interface CountryHighlightsResponse {
+  countryName?: string;
+  countryCode?: string;
+  source?: string;
+  retrievedAt?: string;
+  live?: boolean;
+  highlights?: LiveCountryHighlight[];
+}
+
+export interface CountryExperience {
+  weather: Weather;
+  profile: CountryProfile;
 }
 
 export interface Weather {
@@ -44,6 +69,11 @@ export interface Weather {
   condition: string;
   language: string;
   time: string;
+}
+
+export interface WeatherOverviewResponse {
+  weather?: Weather;
+  highlights?: CountryHighlightsResponse;
 }
 
 export interface DailyForecast {

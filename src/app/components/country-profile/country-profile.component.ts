@@ -30,7 +30,16 @@ import { CountryProfile } from '../../services/models';
           *ngFor="let item of profile.highlights; let i = index"
           [class]="'highlight kind-' + item.kind"
           [style.animationDelay]="(i * 70) + 'ms'">
-          <span class="highlight__icon" aria-hidden="true">
+          <span class="highlight__icon" [class.has-image]="item.imageUrl" aria-hidden="true">
+            <img
+              *ngIf="item.imageUrl"
+              class="highlight__image"
+              [src]="item.imageUrl"
+              alt=""
+              loading="lazy"
+              decoding="async"
+              referrerpolicy="no-referrer"
+              (error)="hideBrokenImage($event)" />
             <span class="msr fill">{{ item.icon || iconFor(item.kind) }}</span>
           </span>
           <div class="highlight__copy">
@@ -181,6 +190,7 @@ import { CountryProfile } from '../../services/models';
     .kind-culture { --kind-color: #7c3aed; }
 
     .highlight__icon {
+      position: relative;
       width: 52px;
       height: 52px;
       display: grid;
@@ -189,10 +199,47 @@ import { CountryProfile } from '../../services/models';
       color: var(--kind-color);
       background: color-mix(in srgb, var(--kind-color) 15%, white);
       box-shadow: var(--md-elev-1);
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .highlight__icon.has-image {
+      color: white;
+      background: color-mix(in srgb, var(--kind-color) 42%, #1f2937);
+    }
+
+    .highlight__icon.has-image::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(180deg, rgba(15, 23, 42, .04), rgba(15, 23, 42, .58));
+    }
+
+    .highlight__image {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: saturate(1.08);
     }
 
     .highlight__icon .msr {
       font-size: 27px;
+    }
+
+    .highlight__icon.has-image .msr {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, .38);
+      text-shadow: 0 2px 8px rgba(0, 0, 0, .38);
+      backdrop-filter: blur(6px);
+      font-size: 20px;
     }
 
     .highlight__copy {
@@ -268,6 +315,12 @@ import { CountryProfile } from '../../services/models';
 })
 export class CountryProfileComponent {
   @Input() profile: CountryProfile | null = null;
+
+  hideBrokenImage(event: Event): void {
+    const image = event.target as HTMLImageElement;
+    image.hidden = true;
+    image.parentElement?.classList.remove('has-image');
+  }
 
   iconFor(kind: string): string {
     switch (kind) {
