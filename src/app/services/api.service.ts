@@ -290,7 +290,10 @@ export class ApiService {
 
   getWeatherBatch(codes: string[], lang: string): Observable<Weather[]> {
     const params = new HttpParams().set('codes', codes.join(',')).set('lang', lang);
-    return this.http.get<Weather[]>(`${this.base}/weather/batch`, { params });
+    return this.http.get<Weather[]>(`${this.base}/weather/batch`, { params }).pipe(
+      // Seed the cache so the spotlight countries open instantly.
+      tap((list) => list.forEach((weather) => this.rememberWeather(weather)))
+    );
   }
 
   getCountryProfile(country: Country, lang: string): Observable<CountryProfile> {

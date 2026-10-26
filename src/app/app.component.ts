@@ -139,11 +139,14 @@ export class AppComponent implements OnInit, OnDestroy {
     this.error = false;
 
     this.experienceSubscription?.unsubscribe();
-    this.experienceSubscription = this.api.getCountryOverview(country, this.currentLang).subscribe({
-      next: ({ weather, profile }) => {
+
+    // Weather and highlights load independently: the weather card appears as soon as the
+    // (fast) weather call returns, and the slower live highlights fill in afterwards.
+    const subscription = new Subscription();
+    subscription.add(this.api.getWeather(country.code, this.currentLang).subscribe({
+      next: (weather) => {
         if (!this.isCurrentSelection(country, token)) return;
         this.weather = weather;
-        this.profile = profile;
         this.loading = false;
         this.error = false;
       },
@@ -155,7 +158,12 @@ export class AppComponent implements OnInit, OnDestroy {
           this.weather = null;
         }
       }
-    });
+    }));
+    subscription.add(this.api.getCountryProfile(country, this.currentLang).subscribe((profile) => {
+      if (!this.isCurrentSelection(country, token)) return;
+      this.profile = profile;
+    }));
+    this.experienceSubscription = subscription;
   }
 
   private loadSpotlight(): void {
