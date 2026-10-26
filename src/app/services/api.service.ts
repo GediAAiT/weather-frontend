@@ -288,6 +288,14 @@ export class ApiService {
     return this.http.get<ForecastResponse>(`${this.base}/weather/forecast`, { params });
   }
 
+  /** Weather for every country in one call; seeds the cache so any country opens instantly. */
+  prefetchAllWeather(lang: string): Observable<Weather[]> {
+    const params = new HttpParams().set('lang', lang);
+    return this.http.get<Weather[]>(`${this.base}/weather/all`, { params }).pipe(
+      tap((list) => list.forEach((weather) => this.rememberWeather(weather)))
+    );
+  }
+
   getWeatherBatch(codes: string[], lang: string): Observable<Weather[]> {
     const params = new HttpParams().set('codes', codes.join(',')).set('lang', lang);
     return this.http.get<Weather[]>(`${this.base}/weather/batch`, { params }).pipe(

@@ -166,8 +166,25 @@ export class AppComponent implements OnInit, OnDestroy {
     this.experienceSubscription = subscription;
   }
 
+  private prefetchAll(): void {
+    // Best effort: if it fails, countries simply load on demand.
+    this.api.prefetchAllWeather(this.currentLang)
+      .pipe(catchError(() => of([] as Weather[])))
+      .subscribe((all) => {
+        // Show the data right away if the user already selected a country that was still loading.
+        const code = this.selected?.code;
+        const match = code ? all.find((w) => w.countryCode === code) : null;
+        if (match && this.loading) {
+          this.weather = match;
+          this.loading = false;
+          this.error = false;
+        }
+      });
+  }
+
   private loadSpotlight(): void {
     if (!this.countries.length) return;
+    this.prefetchAll();
 
     const availableCodes = new Set(this.countries.map(country => country.code));
     const preferred = this.spotlightCodes.filter(code => availableCodes.has(code));
